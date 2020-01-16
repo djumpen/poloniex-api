@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/miratronix/gows"
+	"github.com/miratronix/logpher"
 
 	"github.com/chuckpreslar/emission"
 
@@ -57,6 +58,19 @@ func (p *Poloniex) getNonce() string {
 
 // NewWithCredentials allows to pass in the key and secret directly
 func NewWithCredentials(key, secret string) *Poloniex {
+	lconfig := &logpher.Configuration{
+		Type:    "console",         // This can be "combination", "console", "file", or "rolling"
+		Combine: "console,rolling", // The writers to combine when using the "combination" type
+		File:    "./mylog.txt",     // The name of the file to log to when the type is "file" or "rolling"
+		Size:    8,                 // The maximum log file size in MB when the type is "rolling"
+		Count:   5,                 // The number of files to keep when the type is "rolling"
+		Levels: map[string]string{ // The levels to use for the various loggers
+			"default": "info",  // The default log level for new loggers
+			"main":    "debug", // Overrides the log level for the "main" logger
+		},
+	}
+	l := logpher.New(lconfig)
+
 	p := &Poloniex{}
 	p.Key = key
 	p.Secret = secret
@@ -65,7 +79,9 @@ func NewWithCredentials(key, secret string) *Poloniex {
 	p.emitter = emission.NewEmitter()
 	p.subscriptions = map[string]bool{}
 	p.ws = gows.New(&gows.Configuration{
-		URL: apiURL,
+		URL:               apiURL,
+		Logger:            l.NewLogger("ws"),
+		HeartbeatInterval: 1 * time.Minute,
 	})
 	p.ws.Connect()
 	p.getMarkets()
