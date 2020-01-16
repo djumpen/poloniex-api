@@ -1,4 +1,4 @@
-module github.com/pharrisee/poloniex-api
+module github.com/djumpen/poloniex-api
 
 go 1.13
 
